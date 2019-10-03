@@ -15,6 +15,7 @@ double Compute_Probability(double J, double ONEOKBT) {
 void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vector<vector<int>>>> NEIGHBOR, double p) {
     int a = rnd()%IMAX;
     int b = rnd()%JMAX;
+
     vector<int> coord = {a, b}; //IMAX, JMAX 未定義
     vector<vector<int>> pocket;
     vector<vector<int>> cluster;
@@ -25,30 +26,49 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
     while (pocket.size() != 0)
     {
         int randomNumber = rnd()%pocket.size();
-        vector<int> l = pocket.at(randomNumber);
+        vector<int> l = pocket.at(randomNumber); //(i, j)に着目
 
         for (int m = 0; m < 4; m++) //この4は最近接格子数
-        {
-            
+        {   
             // NEIGHBOR、S、未定義
-            if (S.at(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(0)).at(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(1)) == S.at(l.at(0)).at(l.at(1)) )
+            // cout << "run" << endl;
+            if (S.at( NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(0 /* x */) /* x */).at( NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(1 /* y */) /* y */) == S.at(l.at(0)).at(l.at(1)) )
             {
-                printf("calc\n");
-                vector<int> mm = {NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(0), NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(1)};
-                auto f = find(cluster.begin(), cluster.end(), mm);
-                if (f != cluster.end())
+                // cout << "run2" << endl;
+                // vector<int> mm = {NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(0), NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(1)};
+                // auto f = find(cluster.begin(), cluster.end(), mm);
+                // if (f != cluster.end())
+                // {
+                //     cout << "run3" << endl;
+                //     if ((double)rand()/RAND_MAX < p)
+                //     {
+                //         pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                //         cluster.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                //     }                    
+                // }         
+
+                int c = 0;
+
+                for (int k = 0; k < cluster.size(); k++)
                 {
-                    if ((double)rand()/RAND_MAX < p)
+                    if (cluster.at(k).at(0) == NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(0 /* x */) && cluster.at(k).at(1) == NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(1 /* y */))
                     {
-                        pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
-                        cluster.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                        c += 1;
                     }
                     
                 }
-                printf("calc end\n");
-                
+
+                // cout << "run3" << endl;
+                if (c == 0){
+                    if ((double)rand()/RAND_MAX < p)
+                    {
+                        // cout << "run4" << endl;
+                        pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                        cluster.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                    }
+                }
+                       
             }
-            
         }
         pocket.erase(pocket.begin() + randomNumber);
         
@@ -56,7 +76,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
 
     for (int i = 0; i < cluster.size(); i++)
     {
-        printf("coordinate %d %d\n", cluster.at(i).at(0), cluster.at(i).at(1));
+        // printf("coordinate %d %d\n", cluster.at(i).at(0), cluster.at(i).at(1));
         S.at(cluster.at(i).at(0)).at(cluster.at(i).at(1)) *= -1;
     }
     
@@ -69,20 +89,20 @@ int Magnetization(int IMAX, int JMAX, vector<vector<int>> S) {
     {
         for (int j = 0; j < JMAX; j++)
         {
-            printf("i %d j %d\n", i, j);
             a += S.at(i).at(j);
         }
         
     }
-    return (double)a / (IMAX) * (JMAX);
+    return (double)a / ((IMAX) * (JMAX));
    
 }
 
+// この下がメイン
+
 int main()
 {
-// public:
-    int IMAX = 50;
-    int JMAX = 50;
+    int IMAX = 15;
+    int JMAX = 15;
     double J = 1.0;
     vector<vector<int>> S(IMAX, vector<int>(JMAX)); //これであってる？
     // for文でSを埋める
@@ -103,12 +123,12 @@ int main()
         for (int j = 0; j < JMAX; j++){
             NEIGHBOR.at(i).at(j).at(0).at(0) = (i+1)%IMAX;
             NEIGHBOR.at(i).at(j).at(0).at(1) = j;
-            NEIGHBOR.at(i).at(j).at(1).at(0) = (i-1)%IMAX;
+            NEIGHBOR.at(i).at(j).at(1).at(0) = i != 0 ? (i-1)%IMAX: IMAX-1;
             NEIGHBOR.at(i).at(j).at(1).at(1) = j;
             NEIGHBOR.at(i).at(j).at(2).at(0) = i;
             NEIGHBOR.at(i).at(j).at(2).at(1) = (j+1)%JMAX;
             NEIGHBOR.at(i).at(j).at(3).at(0) = i;
-            NEIGHBOR.at(i).at(j).at(3).at(0) = (j-1)%JMAX;
+            NEIGHBOR.at(i).at(j).at(3).at(0) = j != 0 ? (j-1)%JMAX: JMAX-1;
         }
     }
 
@@ -121,23 +141,22 @@ int main()
     for (int n = 0; n < NUM_ITER; n++)
     {
         Magnet_Iter.at(n) = Magnetization(IMAX, JMAX, S);
-        // printf("[");
-        //     for (int i = 0; i < IMAX; i++)
-        //     {
-        //         printf("[");
-        //         for (int j = 0; j < JMAX; j++)
-        //         {
-        //             printf("%d ", S.at(i).at(j));
-        //         }
-        //         printf("]\n");
-        //     }
-        // printf("]\n\n");
+        printf("[");
+            for (int i = 0; i < IMAX; i++)
+            {
+                printf("[");
+                for (int j = 0; j < JMAX; j++)
+                {
+                    printf("%d ", S.at(i).at(j));
+                }
+                printf("]\n");
+            }
+        printf("]\n\n");
 
         Cluster_Flip(IMAX, JMAX, S, NEIGHBOR, p);
-        printf("%f\n\n", Magnet_Iter.at(n));
+        printf("Iter %d, Magnetization %f\n\n", n, Magnet_Iter.at(n));
 
     }
     
 
 }
- 

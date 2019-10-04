@@ -16,7 +16,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
     int a = rnd()%IMAX;
     int b = rnd()%JMAX;
 
-    vector<int> coord = {a, b}; //IMAX, JMAX 未定義
+    vector<int> coord = {a, b};
     vector<vector<int>> pocket;
     vector<vector<int>> cluster;
 
@@ -26,7 +26,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
     while (pocket.size() != 0)
     {
         int randomNumber = rnd()%pocket.size();
-        vector<int> l = pocket.at(randomNumber); //(i, j)に着目
+        vector<int> l = pocket.at(randomNumber); //座標をランダムチョイス
 
         for (int m = 0; m < 4; m++) //この4は最近接格子数
         {   
@@ -47,7 +47,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
                 //     }                    
                 // }         
 
-                int c = 0;
+                int c = 0; // NEIGHBORがclusterに登録されているかを c の値で判定
 
                 for (int k = 0; k < cluster.size(); k++)
                 {
@@ -60,7 +60,8 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
 
                 // cout << "run3" << endl;
                 if (c == 0){
-                    if ((double)rand()/RAND_MAX < p)
+                    double r = rand() / RAND_MAX;
+                    if (r < p)
                     {
                         // cout << "run4" << endl;
                         pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
@@ -71,6 +72,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
             }
         }
         pocket.erase(pocket.begin() + randomNumber);
+        pocket.shrink_to_fit();
         
     }
 
@@ -85,6 +87,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
 
 int Magnetization(int IMAX, int JMAX, vector<vector<int>> S) {
     int a = 0;
+    int N = IMAX * JMAX;
     for (int i = 0; i < IMAX; i++)
     {
         for (int j = 0; j < JMAX; j++)
@@ -93,7 +96,7 @@ int Magnetization(int IMAX, int JMAX, vector<vector<int>> S) {
         }
         
     }
-    return (double)a / ((IMAX) * (JMAX));
+    return (double) (a / N);
    
 }
 
@@ -101,8 +104,8 @@ int Magnetization(int IMAX, int JMAX, vector<vector<int>> S) {
 
 int main()
 {
-    int IMAX = 15;
-    int JMAX = 15;
+    int IMAX = 50;
+    int JMAX = 50;
     double J = 1.0;
     vector<vector<int>> S(IMAX, vector<int>(JMAX)); //これであってる？
     // for文でSを埋める
@@ -115,7 +118,7 @@ int main()
     }
 
     double ONEOKBT = 1.0;
-    int NUM_ITER = 30;
+    int NUM_ITER = 25;
 
     vector<vector<vector<vector<int>>>> NEIGHBOR(IMAX, vector<vector<vector<int>>>(JMAX, vector<vector<int>>(4, vector<int>(2))));
     // for文で要素NEIGHBORを埋める
@@ -141,7 +144,7 @@ int main()
     for (int n = 0; n < NUM_ITER; n++)
     {
         Magnet_Iter.at(n) = Magnetization(IMAX, JMAX, S);
-        printf("[");
+        printf("[\n");
             for (int i = 0; i < IMAX; i++)
             {
                 printf("[");

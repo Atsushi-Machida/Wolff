@@ -1,103 +1,98 @@
 #include <bits/stdc++.h>
-#include <random>
-#include <vector>
 #include <math.h>
-// #include <class>
 using namespace std;
 
+// 乱数生成のための準備
 random_device rnd;
+uniform_real_distribution<double> real_random(0.0, 1.0);
 
 double exp(double x);
-double Compute_Probability(double J, double ONEOKBT) {
+double Compute_Probability(double J, double ONEOKBT) // 確率計算
+{
     return 1.0 - exp(-2.0 * J * ONEOKBT);
 }
 
-void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vector<vector<int>>>> NEIGHBOR, double p) {
+void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vector<vector<int>>>> NEIGHBOR, double p) // cluster flipを行うための関数
+{
+    // スタートする座標(格子点)をランダムに選ぶ
     int a = rnd()%IMAX;
     int b = rnd()%JMAX;
 
     vector<int> coord = {a, b};
+
+    // pocketとclusterを用意して、スタート地点の座標を格納
     vector<vector<int>> pocket;
     vector<vector<int>> cluster;
 
     pocket = {coord};
     cluster = {coord};
 
-    while (pocket.size() != 0)
+
+    while (pocket.size() != 0) // pocketが空になるまでループ
     {
+        // pocketの中から、着目する座標(格子点)をランダムに選ぶ
+        // 上のcoordはあくまでスタート地点
         int randomNumber = rnd()%pocket.size();
-        vector<int> l = pocket.at(randomNumber); //座標をランダムチョイス
+        vector<int> l = pocket[randomNumber];
 
-        for (int m = 0; m < 4; m++) //この4は最近接格子数
+        for (int m = 0; m < 4; m++) // この4は最近接格子数、最近接格子ごとにpocket、clusterに登録するかを判定していく
         {   
-            // NEIGHBOR、S、未定義
-            // cout << "run" << endl;
-            if (S.at( NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(0 /* x */) /* x */).at( NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(1 /* y */) /* y */) == S.at(l.at(0)).at(l.at(1)) )
+            // 着目した格子点と最近接格子のスピンが同じ向きかどうかを判定
+            if (S[ NEIGHBOR[l[0]][l[1]][m][0] ][ NEIGHBOR[l[0]][l[1]][m][1] ] == S[ l[0] ][ l[1] ])
             {
-                // cout << "run2" << endl;
-                // vector<int> mm = {NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(0), NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m).at(1)};
-                // auto f = find(cluster.begin(), cluster.end(), mm);
-                // if (f != cluster.end())
-                // {
-                //     cout << "run3" << endl;
-                //     if ((double)rand()/RAND_MAX < p)
-                //     {
-                //         pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
-                //         cluster.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
-                //     }                    
-                // }         
-
+                // 最近接格子がclusterに登録されていないかどうかを判定
                 int c = 0; // NEIGHBORがclusterに登録されているかを c の値で判定
-
                 for (int k = 0; k < cluster.size(); k++)
                 {
-                    if (cluster.at(k).at(0) == NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(0 /* x */) && cluster.at(k).at(1) == NEIGHBOR.at(l.at(0) /* i */).at(l.at(1) /* j */).at(m /* m */).at(1 /* y */))
+                    if (cluster[k] == NEIGHBOR[l[0]][l[1]][m]) // clusterにx座標もy座標も一致するものが登録されてたら...
                     {
-                        c += 1;
+                        c = 1; // c を1にしちゃう
                     }
-                    
                 }
 
-                // cout << "run3" << endl;
-                if (c == 0){
-                    double r = rand() / RAND_MAX;
-                    if (r < p)
+                if (c == 0) // c が1だと、clusterに登録済みということになる!
+                {
+                    double r = real_random(rnd);
+                    if (r < p) // k_BTの値で決まる確率pでcluster、pocketに登録
                     {
-                        // cout << "run4" << endl;
-                        pocket.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
-                        cluster.push_back(NEIGHBOR.at(l.at(0)).at(l.at(1)).at(m));
+                        pocket.push_back(NEIGHBOR[l[0]][l[1]][m]);
+                        cluster.push_back(NEIGHBOR[l[0]][l[1]][m]);
+
                     }
                 }
-                       
             }
         }
-        pocket.erase(pocket.begin() + randomNumber);
+
+        // cluster、pocketの登録作業が終わったら...
+
+        pocket.erase(pocket.begin() + randomNumber); // 着目していた格子点をpocketから削除
         pocket.shrink_to_fit();
         
     }
 
+    // pocketが空になったら...
     for (int i = 0; i < cluster.size(); i++)
     {
-        // printf("coordinate %d %d\n", cluster.at(i).at(0), cluster.at(i).at(1));
-        S.at(cluster.at(i).at(0)).at(cluster.at(i).at(1)) *= -1;
+        S[cluster[i][0]][cluster[i][1]] *= -1; // clusterに登録されているすべての格子点のスピンをフリップ
     }
     
     
 }
 
-int Magnetization(int IMAX, int JMAX, vector<vector<int>> S) {
-    int a = 0;
-    int N = IMAX * JMAX;
+double Magnetization(int IMAX, int JMAX, vector<vector<int>> S) // 磁化を計算する関数
+{
+    double a = 0.0;
+    double N = IMAX * JMAX;
     for (int i = 0; i < IMAX; i++)
     {
         for (int j = 0; j < JMAX; j++)
         {
-            a += S.at(i).at(j);
+            double b = S.at(i).at(j);
+            a += b;
         }
         
     }
-    return (double) (a / N);
-   
+    return a / N;   
 }
 
 // この下がメイン
@@ -107,59 +102,65 @@ int main()
     int IMAX = 50;
     int JMAX = 50;
     double J = 1.0;
-    vector<vector<int>> S(IMAX, vector<int>(JMAX)); //これであってる？
-    // for文でSを埋める
-    for (int i = 0; i < IMAX; i++){
+    vector<vector<int>> S(IMAX, vector<int>(JMAX)); // 格子点
+    for (int i = 0; i < IMAX; i++) 
+    {
         for (int j = 0; j < JMAX; j++)
         {
-            S.at(i).at(j) = (rnd()%2) * (-2) + 1;
+            S[i][j] = (rnd()%2) * (-2) + 1;
         }
         
     }
 
     double ONEOKBT = 1.0;
-    int NUM_ITER = 25;
+    int NUM_ITER = 1000;
 
-    vector<vector<vector<vector<int>>>> NEIGHBOR(IMAX, vector<vector<vector<int>>>(JMAX, vector<vector<int>>(4, vector<int>(2))));
-    // for文で要素NEIGHBORを埋める
+    vector<vector<vector<vector<int>>>> NEIGHBOR(IMAX, vector<vector<vector<int>>>(JMAX, vector<vector<int>>(4, vector<int>(2)))); // このNEIGHBOR(i, j)要素にに格子点(i ,j)の最近接格子の座標を格納
     for (int i = 0; i < IMAX; i++){
         for (int j = 0; j < JMAX; j++){
-            NEIGHBOR.at(i).at(j).at(0).at(0) = (i+1)%IMAX;
-            NEIGHBOR.at(i).at(j).at(0).at(1) = j;
-            NEIGHBOR.at(i).at(j).at(1).at(0) = i != 0 ? (i-1)%IMAX: IMAX-1;
-            NEIGHBOR.at(i).at(j).at(1).at(1) = j;
-            NEIGHBOR.at(i).at(j).at(2).at(0) = i;
-            NEIGHBOR.at(i).at(j).at(2).at(1) = (j+1)%JMAX;
-            NEIGHBOR.at(i).at(j).at(3).at(0) = i;
-            NEIGHBOR.at(i).at(j).at(3).at(0) = j != 0 ? (j-1)%JMAX: JMAX-1;
+            NEIGHBOR[i][j][0][0] = (i+1)%IMAX;
+            NEIGHBOR[i][j][0][1] = j;
+            NEIGHBOR[i][j][1][0] = i != 0 ? (i-1)%IMAX: IMAX-1;
+            NEIGHBOR[i][j][1][1] = j;
+            NEIGHBOR[i][j][2][0] = i;
+            NEIGHBOR[i][j][2][1] = (j+1)%JMAX;
+            NEIGHBOR[i][j][3][0] = i;
+            NEIGHBOR[i][j][3][1] = j != 0 ? (j-1)%JMAX: JMAX-1;
         }
     }
 
-
     double p = Compute_Probability(J, ONEOKBT);
-
     vector<double> Magnet_Iter(NUM_ITER); //各イテレーションごとの磁化を保存
     
-
-    for (int n = 0; n < NUM_ITER; n++)
+    for (int n = 0; n < NUM_ITER; n++) // イテレーション回、Cluster_Flipを行う
     {
-        Magnet_Iter.at(n) = Magnetization(IMAX, JMAX, S);
-        printf("[\n");
-            for (int i = 0; i < IMAX; i++)
-            {
-                printf("[");
-                for (int j = 0; j < JMAX; j++)
-                {
-                    printf("%d ", S.at(i).at(j));
-                }
-                printf("]\n");
-            }
-        printf("]\n\n");
+        Magnet_Iter.at(n) = fabs(Magnetization(IMAX, JMAX, S));
+        // printf("[\n");
+        //     for (int i = 0; i < IMAX; i++)
+        //     {
+        //         printf("[");
+        //         for (int j = 0; j < JMAX; j++)
+        //         {
+        //             printf("%d ", S.at(i).at(j));
+        //         }
+        //         printf("]\n");
+        //     }
+        // printf("]\n\n");
 
         Cluster_Flip(IMAX, JMAX, S, NEIGHBOR, p);
-        printf("Iter %d, Magnetization %f\n\n", n, Magnet_Iter.at(n));
+        printf("Iter %d, Magnetization %lf\n", n, Magnet_Iter.at(n));
 
     }
+
+    ofstream outputfile("Wolff_kbT1.csv");
+    
+    for (int i = 0; i < NUM_ITER; i++)
+    {
+        outputfile << i << "," << Magnet_Iter.at(i) << endl;        
+    }
+
+    outputfile.close();
+    
     
 
 }

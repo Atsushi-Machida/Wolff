@@ -41,16 +41,7 @@ void Cluster_Flip(int IMAX, int JMAX, vector<vector<int>>& S, vector<vector<vect
             if (S[ NEIGHBOR[l[0]][l[1]][m][0] ][ NEIGHBOR[l[0]][l[1]][m][1] ] == S[ l[0] ][ l[1] ])
             {
                 // 最近接格子がclusterに登録されていないかどうかを判定
-                int c = 0; // NEIGHBORがclusterに登録されているかを c の値で判定
-                for (int k = 0; k < cluster.size(); k++)
-                {
-                    if (cluster[k] == NEIGHBOR[l[0]][l[1]][m]) // clusterにx座標もy座標も一致するものが登録されてたら...
-                    {
-                        c = 1; // c を1にしちゃう
-                    }
-                }
-
-                if (c == 0) // c が1だと、clusterに登録済みということになる!
+                if (find(cluster.begin(), cluster.end(), NEIGHBOR[l[0]][l[1]][m]) == cluster.end()) // c が1だと、clusterに登録済みということになる!
                 {
                     double r = real_random(rnd);
                     if (r < p) // k_BTの値で決まる確率pでcluster、pocketに登録
